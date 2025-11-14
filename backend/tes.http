@@ -1,0 +1,120 @@
+### Test d'inscription (Register)
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Drya",
+  "lastName": "Mht",
+  "email": "dryamhtt@gmail.com",
+  "password": "123456",
+  "userType": "patient",
+  "phone": "0123456789",
+  "dateOfBirth": "1990-01-15",
+  "address": "123 Rue de la Paix, Paris"
+}
+
+### Test d'inscription médecin
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Marie",
+  "lastName": "Martin",
+  "email": "marie.martin@medecin.com",
+  "password": "motdepasse123",
+  "userType": "doctor",
+  "phone": "0123456789",
+  "specialty": "Cardiologie",
+  "licenseNumber": "12345678",
+  "clinicName": "Clinique du Coeur"
+}
+
+###
+
+### Test de connexion (Login)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jean.dupont@email.com",
+  "password": "motdepasse123",
+  "rememberMe": false
+}
+
+
+### 
+### Test de déconnexion (Logout)
+POST http://localhost:3000/api/auth/logout
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
+
+### Test de rafraîchissement du token
+POST http://localhost:3000/api/auth/refresh
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
+
+### Test de mot de passe oublié
+POST http://localhost:3000/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "jean.dupont@email.com"
+}
+
+### Test de health check
+GET http://localhost:3000/api/health
+
+### 
+### Tests avec authentification (remplacer <TOKEN> par le token obtenu)
+
+### Test des utilisateurs
+GET http://localhost:3000/api/users
+Authorization: Bearer <TOKEN>
+
+### Test des médecins
+GET http://localhost:3000/api/doctors
+Authorization: Bearer <TOKEN>
+
+### Test des rendez-vous
+GET http://localhost:3000/api/appointments
+Authorization: Bearer <TOKEN>
+
+POST http://localhost:3000/api/appointments
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
+
+{
+  "patientId": "<USER_ID>",
+  "doctorId": "<DOCTOR_ID>",
+  "date": "2025-09-10T10:00:00Z",
+  "reason": "Consultation de routine"
+}
+
+### Test des données de santé
+GET http://localhost:3000/api/health-data
+Authorization: Bearer <TOKEN>
+
+POST http://localhost:3000/api/health-data
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
+
+{
+  "weight": 70,
+  "bloodPressure": "120/80",
+  "heartRate": 75,
+  "date": "2025-09-07T08:00:00Z"
+}
+
+### Test des messages
+GET http://localhost:3000/api/messages
+Authorization: Bearer <TOKEN>
+
+POST http://localhost:3000/api/messages
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
+
+{
+  "receiverId": "<RECEIVER_ID>",
+  "content": "Bonjour Docteur, j'aimerais prendre rendez-vous.",
+  "subject": "Demande de rendez-vous"
+}
