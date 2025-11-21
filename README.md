@@ -25,4 +25,3 @@ Gestion utilisateurs administrateur
 Prise de rendez-vous patient
 
 Messagerie sécurisée
-recent:///1bb1446321df610e5082a641692094a0
