@@ -220,3 +220,14 @@ export const deleteUser = async (req, res) => {
     });
   }
 };
+
+// Fonction générique pour récupérer les utilisateurs selon le rôle
+export const getUsersByRole = (role) => async (req, res) => {
+  try {
+    const users = await User.find({ role });
+    res.status(200).json({ success: true, data: users });
+  } catch (err) {
+    console.error('Erreur chargement utilisateurs:', err);
+    res.status(500).json({ success: false, message: 'Erreur lors du chargement des utilisateurs', error: err.message });
+  }
+};

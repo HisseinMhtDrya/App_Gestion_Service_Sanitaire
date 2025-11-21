@@ -11,14 +11,14 @@ async function seed() {
       useUnifiedTopology: true,
     });
 
-    console.log("✅Connecté à MongoDB");
+    console.log("Connecté à MongoDB");
 
     // Nettoyer les collections
     await Medecin.deleteMany();
     await Patient.deleteMany();
     await RendezVous.deleteMany();
 
-    console.log("🧹 Collections vidées");
+    console.log(" Collections vidées");
 
     // Créer des médecins
     const medecins = await Medecin.insertMany([
@@ -38,11 +38,11 @@ async function seed() {
       { date: new Date("2025-09-02T14:00:00"), medecin: medecins[1]._id, patient: patients[1]._id, motif: "Problème de peau" }
     ]);
 
-    console.log("🌱 Données insérées avec succès !");
+    console.log(" Données insérées avec succès !");
     process.exit();
 
   } catch (err) {
-    console.error("❌ Erreur lors du seed :", err);
+    console.error(" Erreur lors du seed :", err);
     process.exit(1);
   }
 }

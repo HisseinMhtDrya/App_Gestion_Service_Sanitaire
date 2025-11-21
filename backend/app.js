@@ -13,6 +13,11 @@ import appointmentRoutes from './routes/appointmentRoutes.js';
 import prescriptionRoutes from './routes/prescriptionRoutes.js'; // <-- Ajoutez cette ligne
 import './utils/reminderService.js'; // Pour démarrer le service de rappels
 import availabilityRoutes from './routes/availability.js';
+import consultationRoutes from './routes/consultationRoutes.js';
+import patientRoutes from './routes/patientRoutes.js';
+import User from './models/User.js';
+import sendEmail from './utils/sendEmail.js';
+// import adminRoutes from './routes/adminRoutes.js'; // supprimé
 
 dotenv.config();
 
@@ -49,8 +54,49 @@ app.get('/api/health', (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/appointments', appointmentRoutes);
-app.use('/api/prescriptions', prescriptionRoutes); // <-- Ajoutez cette ligne
+app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api/consultations', consultationRoutes);
+app.use('/api/patients', patientRoutes);
+
+// ------------------- ADMIN DASHBOARD -------------------
+import { Router } from 'express';
+import Appointment from './models/Appointment.js';
+
+const adminRoutes = Router();
+
+// Route Dashboard Admin
+adminRoutes.get('/dashboard', async (req, res) => {
+  try {
+    const totalPatients = await User.countDocuments({ role: 'patient' });
+    const totalMedecins = await User.countDocuments({ role: 'medecin' });
+    const totalRendezvous = await Appointment.countDocuments();
+
+    const recentPatients = await User.find({ role: 'patient' })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('nom email createdAt');
+
+    const recentAppointments = await Appointment.find()
+      .sort({ date: -1 })
+      .limit(5)
+      .populate('patient', 'nom email')
+      .populate('medecin', 'nom email');
+
+    res.json({
+      totalPatients,
+      totalMedecins,
+      totalRendezvous,
+      recentPatients,
+      recentAppointments
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Erreur lors de la récupération du dashboard", error: err.message });
+  }
+});
+
+app.use('/api/admin', adminRoutes);
+// --------------------------------------------------------
 
 // Messagerie : récupération historique
 app.get("/api/messages/:user1/:user2", async (req, res) => {
@@ -74,6 +120,7 @@ io.on("connection", (socket) => {
 
   socket.on("joinRoom", (userId) => {
     socket.join(userId); // Chaque utilisateur rejoint sa "room" par son ID
+    console.log(`Utilisateur ${userId} a rejoint sa room`);
   });
 
   socket.on("sendMessage", async (data) => {
@@ -81,6 +128,17 @@ io.on("connection", (socket) => {
       const message = new Message(data);
       await message.save();
       io.to(data.receiverId).emit("receiveMessage", message);
+
+      // Envoyer email au destinataire
+      const userReceiver = await User.findById(data.receiverId);
+      const userSender = await User.findById(data.senderId);
+      if (userReceiver && userReceiver.email) {
+        await sendEmail(
+          userReceiver.email,
+          "Vous avez reçu un nouveau message",
+          `Bonjour ${userReceiver.nom},\n\nVous avez reçu un nouveau message de ${userSender?.nom || 'un utilisateur'} :\n\n"${data.content}"\n\nConnectez-vous pour répondre.`
+        );
+      }
     } catch (err) {
       console.error("Erreur en envoyant le message :", err);
     }
@@ -110,6 +168,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
@@ -117,5 +176,6 @@ server.listen(PORT, () => {
   console.log(`API disponible sur: http://localhost:${PORT}/api`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
   console.log(`Service de rendez-vous activé`);
-  console.log(`Service de prescriptions activé`); // <-- Ajoutez cette ligne
+  console.log(`Service de prescriptions activé`); 
 });
+
