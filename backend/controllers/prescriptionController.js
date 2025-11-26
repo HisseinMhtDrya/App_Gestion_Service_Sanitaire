@@ -147,37 +147,90 @@ export const getMyPrescriptions = async (req, res) => {
 // @desc    Obtenir les ordonnances du patient connecté
 // @route   GET /api/prescriptions/patient/my-prescriptions
 // @access  Private (Patient)
+// @desc    Obtenir les ordonnances du patient connecté
+// @route   GET /api/prescriptions/patient/my-prescriptions
+// @access  Private (Patient)
+// @desc    Obtenir les ordonnances du patient connecté
+// @route   GET /api/prescriptions/patient/my-prescriptions
+// @access  Private (Patient)
 export const getMyPatientPrescriptions = async (req, res) => {
   try {
-    console.log('Getting patient prescriptions for user:', req.user._id, 'Role:', req.user.role);
+    console.log('🎯 GET /patient/my-prescriptions CALLED');
+    console.log('👤 User ID:', req.user._id);
+    console.log('🔐 User role:', req.user.role);
+    console.log('📧 User email:', req.user.email);
 
+    // CORRECTION : Utiliser 'patient' (avec t) comme dans le modèle User
     if (req.user.role !== 'patient') {
+      console.log('❌ Access denied. User role:', req.user.role, 'Expected: patient');
       return res.status(403).json({ 
         success: false, 
-        message: "Accès réservé aux patients" 
+        message: `Accès réservé aux patients. Rôle actuel: ${req.user.role}` 
       });
     }
+
+    console.log('✅ ACCESS GRANTED - User is a patient');
 
     const prescriptions = await Prescription.find({ patient: req.user._id })
       .populate('doctor', 'nom prenom poste specialite etablissement')
       .populate('appointment', 'date heure motif')
       .sort({ issuedDate: -1 });
 
+    console.log(`📋 Found ${prescriptions.length} prescriptions for user ${req.user._id}`);
+
     res.json({ 
       success: true, 
       count: prescriptions.length, 
-      data: prescriptions 
+      data: prescriptions,
+      message: "Ordonnances récupérées avec succès"
     });
 
   } catch (error) {
-    console.error('Erreur récupération ordonnances patient connecté:', error);
+    console.error('💥 ERROR in getMyPatientPrescriptions:', error);
     res.status(500).json({ 
       success: false, 
-      message: error.message 
+      message: "Erreur serveur: " + error.message 
     });
   }
 };
 
+
+// Dans prescriptionController.js - AJOUTEZ CETTE FONCTION
+export const checkUserRole = async (req, res) => {
+  try {
+    console.log('🔍 CHECK USER ROLE');
+    console.log('👤 User:', req.user);
+    console.log('🔐 Role:', req.user.role);
+    console.log('🔍 Role type:', typeof req.user.role);
+    console.log('🔍 Role length:', req.user.role.length);
+    console.log('🔍 Char codes:', Array.from(req.user.role).map(c => c.charCodeAt(0)));
+    
+    // Test de comparaison
+    console.log('🧪 Comparison tests:');
+    console.log('  patient ===', req.user.role === 'patient');
+    console.log('  patient ===', req.user.role === 'patient');
+    console.log('  patient ===', req.user.role === 'patient');
+    
+    res.json({
+      success: true,
+      user: {
+        id: req.user._id,
+        role: req.user.role,
+        roleType: typeof req.user.role,
+        roleLength: req.user.role.length,
+        charCodes: Array.from(req.user.role).map(c => c.charCodeAt(0)),
+        comparisons: {
+          equals_patient: req.user.role === 'patient',
+          equals_patient: req.user.role === 'patient',
+          equals_patient: req.user.role === 'patient'
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Check role error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 // @desc    Obtenir une ordonnance spécifique
 // @route   GET /api/prescriptions/:id
 // @access  Private (Médecin, Admin ou Patient concerné)
