@@ -7,11 +7,11 @@ import {
   updateAppointment,
   getAppointmentById,
   cancelAppointment,
-  getMedecinAppointments
+  getMedecinAppointments,
+  getPatientAppointments // <-- AJOUTEZ CET IMPORT
 } from '../controllers/appointmentController.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { manualSendReminders } from '../utils/reminderService.js';
-import Appointment from '../models/Appointment.js';
 
 const router = express.Router();
 
@@ -19,30 +19,20 @@ const router = express.Router();
 router.use(protect);
 
 // =====================
-// ROUTE À AJOUTER : GET /api/appointments/my
+// Routes pour les patients
 // =====================
-router.get('/my', async (req, res) => {
-  try {
-    const patientId = req.user._id;
-
-    // Récupérer tous les rendez-vous du patient avec infos du médecin
-    const appointments = await Appointment.find({ patient: patientId })
-      .populate('medecin', '_id nom prenom') // <-- important
-      .sort({ date: 1 });
-
-    res.json(appointments);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
+router.get('/my', getPatientAppointments); // Rendez-vous du patient connecté
+router.get('/history', getAppointmentHistory); // Historique des rendez-vous
 
 // =====================
-// Routes existantes
+// Routes pour les médecins
+// =====================
+router.get('/medecin', authorize('medecin'), getMedecinAppointments);
+
+// =====================
+// Routes générales
 // =====================
 router.post('/', createAppointment);
-router.get('/history', getAppointmentHistory);
-router.get('/medecin', authorize('medecin'), getMedecinAppointments);
 router.get('/availability/:medecinId', getMedecinAvailability);
 router.get('/:id', getAppointmentById);
 router.put('/:id', updateAppointment);

@@ -8,24 +8,19 @@ import {
   updatePrescription,
   deletePrescription
 } from '../controllers/prescriptionController.js';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Toutes les routes protégées
-router.use(protect);
+// --- Ordonnances CRUD ---
+router.post('/', protect, createPrescription);
+router.get('/doctor/my-prescriptions', protect, getMyPrescriptions);
+router.get('/patient/:patientId', protect, getPatientPrescriptions);
+router.get('/:id', protect, getPrescription);
+router.put('/:id', protect, updatePrescription);
+router.delete('/:id', protect, deletePrescription);
 
-// Routes médecin
-router.post('/', authorize('medecin'), createPrescription);
-router.get('/doctor/my-prescriptions', authorize('medecin'), getMyPrescriptions);
-
-// Routes patient et médecin
-router.get('/patient/:patientId', getPatientPrescriptions);
-router.get('/:id', getPrescription);
-router.get('/:id/pdf', generatePrescriptionPDF);
-
-// Routes modification
-router.put('/:id', authorize('medecin'), updatePrescription);
-router.delete('/:id', authorize('medecin', 'admin'), deletePrescription);
+// --- PDF ---
+router.get('/:id/pdf', protect, generatePrescriptionPDF);
 
 export default router;

@@ -110,9 +110,31 @@ export const updateUser = async (req, res) => {
   }
 };
 
+// @desc    Récupérer tous les patients
+// @route   GET /api/users/patients
+// @access  Private/Medecin/Admin
+export const getPatients = async (req, res) => {
+  try {
+    const patients = await User.find({ role: 'patient' }).select("-password").sort({ nom: 1 });
+    
+    res.json({
+      success: true,
+      count: patients.length,
+      data: patients,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des patients",
+    });
+  }
+};
+
+// @desc    Récupérer tous les médecins
+// @route   GET /api/users/medecins
+// @access  Private
 export const getMedecins = async (req, res) => {
   try {
-    // Trouver tous les utilisateurs avec le rôle "medecin"
     const medecins = await User.find({ role: "medecin" }).select("-password").sort({ nom: 1 });
 
     res.json({
@@ -127,9 +149,13 @@ export const getMedecins = async (req, res) => {
     });
   }
 };
+
+// @desc    Récupérer le profil de l'utilisateur connecté
+// @route   GET /api/users/profile
+// @access  Private
 export const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");  // Assurer que l'ID de l'utilisateur est récupéré depuis le token JWT
+    const user = await User.findById(req.user.id).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -150,12 +176,13 @@ export const getUserProfile = async (req, res) => {
   }
 };
 
+// @desc    Mettre à jour le profil de l'utilisateur connecté
+// @route   PUT /api/users/profile
+// @access  Private
 export const updateUserProfile = async (req, res) => {
   try {
-    // Les informations à mettre à jour
     const { nom, email, poste } = req.body;
 
-    // Trouver l'utilisateur avec l'ID dans le token
     let user = await User.findById(req.user.id);
 
     if (!user) {
@@ -184,6 +211,7 @@ export const updateUserProfile = async (req, res) => {
     });
   }
 };
+
 // @desc    Supprimer un utilisateur
 // @route   DELETE /api/users/:id
 // @access  Private/Admin

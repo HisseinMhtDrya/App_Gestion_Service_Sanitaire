@@ -7,6 +7,7 @@ import cors from 'cors';
 import { connectDB } from './config/db.js';
 import Message from './models/Message.js';
 // Routes
+
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
@@ -61,7 +62,7 @@ app.use('/api/patients', patientRoutes);
 
 // ------------------- ADMIN DASHBOARD -------------------
 import { Router } from 'express';
-import Appointment from './models/Appointment.js';
+import Appointment from './models/appointmen.js';
 
 const adminRoutes = Router();
 

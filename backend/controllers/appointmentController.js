@@ -1,4 +1,4 @@
-import Appointment from '../models/Appointment.js';
+import Appointment from '../models/appointmen.js';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
 import Availability from '../models/Availability.js'; // <-- Ajoutez cette importation
@@ -161,59 +161,77 @@ export const validateAppointment = async (req, res) => {
 // @desc    Obtenir l'historique des rendez-vous
 // @route   GET /api/appointments/history
 // @access  Private
+// @desc    Obtenir l'historique des rendez-vous avec filtres
+// @route   GET /api/appointments/history
+// @access  Private
 export const getAppointmentHistory = async (req, res) => {
   try {
     const userId = req.user._id;
     const userRole = req.user.role;
-    const { page = 1, limit = 10, status } = req.query;
+    const { patientId, status, page = 1, limit = 10 } = req.query;
+
+    console.log('=== HISTORIQUE RENDEZ-VOUS ===');
+    console.log('Utilisateur:', userId, 'Rôle:', userRole);
+    console.log('Filtres:', { patientId, status, page, limit });
 
     let query = {};
 
-    // Filtrer selon le rôle de l'utilisateur
+    // Logique de filtrage selon le rôle de l'utilisateur
     if (userRole === 'patient') {
+      // Patient ne peut voir que ses propres rendez-vous
       query.patient = userId;
     } else if (userRole === 'medecin') {
+      // Médecin peut voir ses rendez-vous ou ceux d'un patient spécifique
       query.medecin = userId;
+      if (patientId) {
+        query.patient = patientId;
+      }
+    } else if (userRole === 'admin') {
+      // Admin peut voir tous les rendez-vous ou filtrer par patient
+      if (patientId) {
+        query.patient = patientId;
+      }
     }
 
     // Filtrer par statut si fourni
-    if (status) {
+    if (status && status !== 'all') {
       query.status = status;
     }
 
-    const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      sort: { date: -1, heure: -1 },
-      populate: [
-        { path: 'patient', select: 'nom email' },
-        { path: 'medecin', select: 'nom email poste' }
-      ]
-    };
+    console.log('Query final:', query);
+
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const appointments = await Appointment.find(query)
       .sort({ date: -1, heure: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .skip(skip)
       .populate('patient', 'nom email')
       .populate('medecin', 'nom email poste');
 
     const total = await Appointment.countDocuments(query);
 
+    console.log(`${appointments.length} rendez-vous trouvés`);
+
     res.status(200).json({
       success: true,
       data: {
         appointments,
-        totalPages: Math.ceil(total / limit),
-        currentPage: page,
-        total
+        pagination: {
+          totalPages: Math.ceil(total / limit),
+          currentPage: parseInt(page),
+          total
+        }
       },
     });
 
   } catch (error) {
-    res.status(400).json({
+    console.error('Erreur récupération historique:', error);
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Erreur lors de la récupération de l\'historique des rendez-vous',
+      error: error.message
     });
   }
 };
@@ -450,6 +468,41 @@ export const cancelAppointment = async (req, res) => {
     res.status(400).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+
+// @desc    Obtenir les rendez-vous du patient connecté
+// @route   GET /api/appointments/my
+// @access  Private (Patient)
+export const getPatientAppointments = async (req, res) => {
+  try {
+    const patientId = req.user._id;
+
+    // Vérifier que l'utilisateur est un patient
+    if (req.user.role !== 'patient') {
+      return res.status(403).json({
+        success: false,
+        message: "Accès réservé aux patients",
+      });
+    }
+
+    // Récupérer tous les rendez-vous du patient avec infos du médecin
+    const appointments = await Appointment.find({ patient: patientId })
+      .populate('medecin', 'nom email poste')
+      .sort({ date: 1, heure: 1 });
+
+    res.json({
+      success: true,
+      count: appointments.length,
+      data: appointments,
+    });
+  } catch (error) {
+    console.error('Erreur récupération rendez-vous patient:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des rendez-vous',
     });
   }
 };

@@ -1,6 +1,6 @@
 // utils/reminderService.js (version mise à jour)
 import cron from 'node-cron';
-import Appointment from '../models/Appointment.js';
+import Appointment from '../models/appointmen.js';
 import sendEmail from './sendEmail.js';
 
 // Fonction pour envoyer les rappels

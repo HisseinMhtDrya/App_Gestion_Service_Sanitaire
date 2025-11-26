@@ -1,13 +1,23 @@
-// backend/controllers/patientController.js
-import User from '../models/User.js';
+import Appointment from '../models/appointmen.js';
 
-export const getCurrentPatient = async (req, res) => {
+
+
+export const getAllPatientsWithAppointments = async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(404).json({ success: false, message: "Patient non trouvé" });
-    }
-    res.json(req.user);
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    const patients = await Patient.find().lean();
+
+    const appointments = await Appointment.find().lean();
+
+    // Associer rendez-vous à chaque patient
+    const patientsWithAppointments = patients.map(patient => ({
+      ...patient,
+      appointments: appointments.filter(a => a.patientId?.toString() === patient._id.toString())
+    }));
+
+    res.json(patientsWithAppointments);
+
+  } catch (error) {
+    console.error("Erreur backend:", error);
+    res.status(500).json({ message: "Erreur serveur lors du chargement des patients." });
   }
 };

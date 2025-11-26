@@ -1,9 +1,14 @@
 import express from 'express';
-import { protect, authorize } from '../middleware/auth.js';
-import { getCurrentPatient } from '../controllers/patientController.js';
+import { getAllPatientsWithAppointments } from '../controllers/patientController.js';
+import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/me', protect, authorize('patient'), getCurrentPatient);
+router.get(
+  '/',
+  protect,
+  authorize('medecin'),
+  getAllPatientsWithAppointments
+);
 
 export default router;
