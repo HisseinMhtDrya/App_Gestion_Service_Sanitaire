@@ -15,8 +15,9 @@ const router = express.Router();
 router.use(protect);
 
 // ----- Routes utilisateurs -----
+router.get('/all-users', authorize('admin', 'medecin'), getUsers);
 router.get('/', authorize('admin', 'medecin'), getUsers);
-router.get('/profile', getUserProfile);
+router.get('/me', getUserProfile);
 router.put('/profile', updateUserProfile);
 router.get('/medecins', getMedecins);
 router.get('/patients', authorize('medecin', 'admin'), getPatients);

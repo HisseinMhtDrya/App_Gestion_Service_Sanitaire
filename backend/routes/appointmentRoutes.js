@@ -18,20 +18,14 @@ const router = express.Router();
 // Toutes les routes nécessitent une authentification
 router.use(protect);
 
-// =====================
 // Routes pour les patients
-// =====================
 router.get('/my', getPatientAppointments); // Rendez-vous du patient connecté
 router.get('/history', getAppointmentHistory); // Historique des rendez-vous
 
-// =====================
 // Routes pour les médecins
-// =====================
 router.get('/medecin', authorize('medecin'), getMedecinAppointments);
 
-// =====================
 // Routes générales
-// =====================
 router.post('/', createAppointment);
 router.get('/availability/:medecinId', getMedecinAvailability);
 router.get('/:id', getAppointmentById);

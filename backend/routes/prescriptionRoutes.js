@@ -3,7 +3,7 @@ import {
   createPrescription,
   getPatientPrescriptions,
   getMyPrescriptions,
-  getMyPatientPrescriptions, // ⬅️ AJOUTEZ CET IMPORT
+  getMyPatientPrescriptions, // ⬅ AJOUTEZ CET IMPORT
   getPrescription,
   generatePrescriptionPDF,
   updatePrescription,
@@ -17,7 +17,7 @@ const router = express.Router();
 // --- Ordonnances CRUD ---
 router.post('/', protect, createPrescription);
 router.get('/doctor/my-prescriptions', protect, getMyPrescriptions);
-router.get('/patient/my-prescriptions', protect, getMyPatientPrescriptions); // ⬅️ AJOUTEZ CETTE ROUTE
+router.get('/patient/my-prescriptions', protect, getMyPatientPrescriptions); // ⬅ AJOUTEZ CETTE ROUTE
 router.get('/patient/:patientId', protect, getPatientPrescriptions);
 router.get('/:id', protect, getPrescription);
 router.put('/:id', protect, updatePrescription);

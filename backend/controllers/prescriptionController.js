@@ -153,6 +153,9 @@ export const getMyPrescriptions = async (req, res) => {
 // @desc    Obtenir les ordonnances du patient connecté
 // @route   GET /api/prescriptions/patient/my-prescriptions
 // @access  Private (Patient)
+// @desc    Obtenir les ordonnances de l'utilisateur connecté (Patient, Médecin ou Admin)
+// @route   GET /api/prescriptions/patient/my-prescriptions
+// @access  Private (Patient, Médecin, Admin)
 export const getMyPatientPrescriptions = async (req, res) => {
   try {
     console.log('🎯 GET /patient/my-prescriptions CALLED');
@@ -160,53 +163,73 @@ export const getMyPatientPrescriptions = async (req, res) => {
     console.log('🔐 User role:', req.user.role);
     console.log('📧 User email:', req.user.email);
 
-    // CORRECTION : Utiliser 'patient' (avec t) comme dans le modèle User
-    if (req.user.role !== 'patient') {
-      console.log('❌ Access denied. User role:', req.user.role, 'Expected: patient');
+    let prescriptions = [];
+    let query = {};
+
+    // DÉTERMINER LA REQUÊTE SELON LE RÔLE
+    if (req.user.role === 'patient') {
+      // PATIENT : voir ses propres ordonnances
+      query = { patient: req.user._id };
+      console.log('👤 Patient mode - fetching own prescriptions');
+      
+    } else if (req.user.role === 'medecin') {
+      // MÉDECIN : voir les ordonnances qu'il a créées
+      query = { doctor: req.user._id };
+      console.log('👨‍⚕️ Doctor mode - fetching prescriptions created by me');
+      
+    } else if (req.user.role === 'admin') {
+      // ADMIN : voir toutes les ordonnances
+      query = {};
+      console.log('👑 Admin mode - fetching all prescriptions');
+      
+    } else {
+      // RÔLE NON AUTORISÉ
+      console.log('❌ Access denied. Invalid role:', req.user.role);
       return res.status(403).json({ 
         success: false, 
-        message: `Accès réservé aux patients. Rôle actuel: ${req.user.role}` 
+        message: `Rôle non autorisé: ${req.user.role}` 
       });
     }
 
-    console.log('✅ ACCESS GRANTED - User is a patient');
+    console.log('ACCESS GRANTED - Fetching prescriptions...');
 
-    const prescriptions = await Prescription.find({ patient: req.user._id })
+    // EXÉCUTER LA REQUÊTE
+    prescriptions = await Prescription.find(query)
+      .populate('patient', 'nom prenom email telephone dateNaissance')
       .populate('doctor', 'nom prenom poste specialite etablissement')
       .populate('appointment', 'date heure motif')
       .sort({ issuedDate: -1 });
 
-    console.log(`📋 Found ${prescriptions.length} prescriptions for user ${req.user._id}`);
+    console.log(` Found ${prescriptions.length} prescriptions for ${req.user.role}`);
 
     res.json({ 
       success: true, 
       count: prescriptions.length, 
       data: prescriptions,
-      message: "Ordonnances récupérées avec succès"
+      message: `Ordonnances récupérées avec succès (${req.user.role})`,
+      userRole: req.user.role
     });
 
   } catch (error) {
-    console.error('💥 ERROR in getMyPatientPrescriptions:', error);
+    console.error(' ERROR in getMyPatientPrescriptions:', error);
     res.status(500).json({ 
       success: false, 
       message: "Erreur serveur: " + error.message 
     });
   }
 };
-
-
 // Dans prescriptionController.js - AJOUTEZ CETTE FONCTION
 export const checkUserRole = async (req, res) => {
   try {
-    console.log('🔍 CHECK USER ROLE');
-    console.log('👤 User:', req.user);
-    console.log('🔐 Role:', req.user.role);
-    console.log('🔍 Role type:', typeof req.user.role);
-    console.log('🔍 Role length:', req.user.role.length);
-    console.log('🔍 Char codes:', Array.from(req.user.role).map(c => c.charCodeAt(0)));
+    console.log(' CHECK USER ROLE');
+    console.log(' User:', req.user);
+    console.log(' Role:', req.user.role);
+    console.log(' Role type:', typeof req.user.role);
+    console.log(' Role length:', req.user.role.length);
+    console.log(' Char codes:', Array.from(req.user.role).map(c => c.charCodeAt(0)));
     
     // Test de comparaison
-    console.log('🧪 Comparison tests:');
+    console.log(' Comparison tests:');
     console.log('  patient ===', req.user.role === 'patient');
     console.log('  patient ===', req.user.role === 'patient');
     console.log('  patient ===', req.user.role === 'patient');
